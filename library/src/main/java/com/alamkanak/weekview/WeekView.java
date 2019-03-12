@@ -191,7 +191,7 @@ public class WeekView extends View {
 
         @Override
         public boolean onDown(MotionEvent e) {
-            goToNearestOrigin();
+            stopScrolling();
             return true;
         }
 
@@ -299,6 +299,7 @@ public class WeekView extends View {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
+            goToNearestOrigin();
 
             // If the tap was on an event then trigger the callback.
             if (mEventRects != null && mEventClickListener != null) {
@@ -398,6 +399,7 @@ public class WeekView extends View {
         @Override
         public void onLongPress(MotionEvent e) {
             super.onLongPress(e);
+            goToNearestOrigin();
 
             if (mEventLongPressListener != null && mEventRects != null) {
                 List<EventRect> reversedEventRects = mEventRects;
@@ -2624,6 +2626,15 @@ public class WeekView extends View {
         }
     }
 
+    /**
+     * A lighter function to stop the current scroll animation
+     */
+    private void stopScrolling(){
+        //force scroller animation stop
+        mScroller.forceFinished(true);
+        // Reset scrolling and fling direction.
+        mCurrentScrollDirection = mCurrentFlingDirection = Direction.NONE;
+    }
 
     /////////////////////////////////////////////////////////////////
     //
