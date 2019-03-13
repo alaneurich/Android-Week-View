@@ -684,8 +684,9 @@ public class WeekView extends View {
         for (int i = 0; i < getNumberOfPeriods(); i++) {
             // Measure time string and get max width.
             String time = getDateTimeInterpreter().interpretTime(i, (i % 2) * 30);
-            if (time == null)
-                throw new IllegalStateException("A DateTimeInterpreter must not return null time");
+            if (time == null) {
+                time = interpretDefaultTime(i, (i % 2) * 30);
+            }
             mTimeTextWidth = Math.max(mTimeTextWidth, mTimeTextPaint.measureText(time));
         }
     }
@@ -758,8 +759,9 @@ public class WeekView extends View {
             // Get the time to be displayed, as a String.
             String time = getDateTimeInterpreter().interpretTime(hour, minutes);
             // Draw the text if its y position is not outside of the visible area. The pivot point of the text is the point at the bottom-right corner.
-            if (time == null)
-                throw new IllegalStateException("A DateTimeInterpreter must not return null time");
+            if (time == null) {
+                time = interpretDefaultTime(hour, minutes);
+            }
             if (top < getHeight())
                 canvas.drawText(time, mTimeTextWidth + mHeaderColumnPadding, top + mTimeTextHeight, mTimeTextPaint);
         }
@@ -980,8 +982,9 @@ public class WeekView extends View {
 
             // Draw the day labels.
             String dayLabel = getDateTimeInterpreter().interpretDate(day);
-            if (dayLabel == null)
-                throw new IllegalStateException("A DateTimeInterpreter must not return null date");
+            if (dayLabel == null) {
+                dayLabel = interpretDefaultDate(day);
+            }
             canvas.drawText(dayLabel, startPixel + mWidthPerDay / 2, mHeaderTextHeight + mHeaderRowPadding, isToday ? mTodayHeaderTextPaint : mHeaderTextPaint);
             drawAllDayEvents(day, startPixel, canvas);
             startPixel += mWidthPerDay + mColumnGap;
@@ -1638,41 +1641,49 @@ public class WeekView extends View {
             mDateTimeInterpreter = new DateTimeInterpreter() {
                 @Override
                 public String interpretDate(Calendar date) {
-                    try {
-                        SimpleDateFormat sdf = mDayNameLength == LENGTH_SHORT ? new SimpleDateFormat("EEEEE M/dd", Locale.getDefault()) : new SimpleDateFormat("EEE M/dd", Locale.getDefault());
-                        return sdf.format(date.getTime()).toUpperCase();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return "";
-                    }
+                    return interpretDefaultDate(date);
                 }
 
                 @Override
                 public String interpretTime(int hour, int minutes) {
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.set(Calendar.HOUR_OF_DAY, hour);
-                    calendar.set(Calendar.MINUTE, minutes);
-
-                    try {
-                        SimpleDateFormat sdf;
-                        if (DateFormat.is24HourFormat(getContext())) {
-                            sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                        } else {
-                            if ((mTimeColumnResolution % 60 != 0)) {
-                                sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-                            } else {
-                                sdf = new SimpleDateFormat("hh a", Locale.getDefault());
-                            }
-                        }
-                        return sdf.format(calendar.getTime());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return "";
-                    }
+                    return interpretDefaultTime(hour, minutes);
                 }
             };
         }
         return mDateTimeInterpreter;
+    }
+
+    private String interpretDefaultDate(Calendar date) {
+        try {
+            SimpleDateFormat sdf = mDayNameLength == LENGTH_SHORT ? new SimpleDateFormat("EEEEE M/dd", Locale.getDefault()) : new SimpleDateFormat("EEE M/dd", Locale.getDefault());
+            return sdf.format(date.getTime()).toUpperCase();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private String interpretDefaultTime(int hour, int minutes) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, hour);
+        calendar.set(Calendar.MINUTE, minutes);
+
+        try {
+            SimpleDateFormat sdf;
+            if (DateFormat.is24HourFormat(getContext())) {
+                sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            } else {
+                if ((mTimeColumnResolution % 60 != 0)) {
+                    sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                } else {
+                    sdf = new SimpleDateFormat("hh a", Locale.getDefault());
+                }
+            }
+            return sdf.format(calendar.getTime());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
     /**
