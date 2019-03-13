@@ -27,6 +27,7 @@ import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.text.style.StyleSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.DragEvent;
 import android.view.GestureDetector;
@@ -56,6 +57,8 @@ import static com.alamkanak.weekview.WeekViewUtil.today;
  * Website: http://alamkanak.github.io/
  */
 public class WeekView extends View {
+
+    private final static String LOG_TAG = WeekView.class.getSimpleName();
 
     private enum Direction {
         NONE, LEFT, RIGHT, VERTICAL
@@ -103,7 +106,6 @@ public class WeekView extends View {
     private boolean mRefreshEvents = false;
     private Direction mCurrentFlingDirection = Direction.NONE;
     private ScaleGestureDetector mScaleDetector;
-    private boolean mIsZooming;
     private Calendar mFirstVisibleDay;
     private Calendar mLastVisibleDay;
     private int mMinimumFlingVelocity = 0;
@@ -198,8 +200,9 @@ public class WeekView extends View {
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             // Check if view is zoomed.
-            if (mIsZooming)
-                return true;
+            if (mScaleDetector.isInProgress()) {
+                return false;
+            }
 
             switch (mCurrentScrollDirection) {
                 case NONE: {
@@ -268,13 +271,13 @@ public class WeekView extends View {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if (mIsZooming)
-                return true;
+            if (mScaleDetector.isInProgress())
+                return false;
 
             if ((mCurrentFlingDirection == Direction.LEFT && !mHorizontalFlingEnabled) ||
                     (mCurrentFlingDirection == Direction.RIGHT && !mHorizontalFlingEnabled) ||
                     (mCurrentFlingDirection == Direction.VERTICAL && !mVerticalFlingEnabled)) {
-                return true;
+                return false;
             }
 
             mScroller.forceFinished(true);
@@ -2540,18 +2543,18 @@ public class WeekView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        mScaleDetector.onTouchEvent(event);
-        boolean val = mGestureDetector.onTouchEvent(event);
+        boolean result = mScaleDetector.onTouchEvent(event);
+        result = mGestureDetector.onTouchEvent(event) || result;
 
         // Check after call of mGestureDetector, so mCurrentFlingDirection and mCurrentScrollDirection are set.
-        if (event.getAction() == MotionEvent.ACTION_UP && !mIsZooming && mCurrentFlingDirection == Direction.NONE) {
+        if (event.getAction() == MotionEvent.ACTION_UP && !mScaleDetector.isInProgress() && mCurrentFlingDirection == Direction.NONE) {
             if (mCurrentScrollDirection == Direction.RIGHT || mCurrentScrollDirection == Direction.LEFT) {
                 goToNearestOrigin();
             }
             mCurrentScrollDirection = Direction.NONE;
         }
 
-        return val;
+        return result || super.onTouchEvent(event);
     }
 
     private void goToNearestOrigin() {
@@ -2827,13 +2830,13 @@ public class WeekView extends View {
 
         @Override
         public void onScaleEnd(ScaleGestureDetector detector) {
-            mIsZooming = false;
-            mZoomEndListener.onZoomEnd(mHourHeight);
+            if (mZoomEndListener != null) {
+                mZoomEndListener.onZoomEnd(mHourHeight);
+            }
         }
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector detector) {
-            mIsZooming = true;
             goToNearestOrigin();
 
             // Calculate focused point for scale action
