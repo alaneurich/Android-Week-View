@@ -142,8 +142,8 @@ public class WeekView extends View {
     private int mEventTextColor = Color.BLACK;
     private int mEventPadding = 8;
     private int mHeaderColumnBackgroundColor = Color.WHITE;
-    private int mDefaultEventColor;
-    private int mNewEventColor;
+    private int mDefaultEventColor = Color.parseColor("#9fc6e7");
+    private int mNewEventColor = Color.parseColor("#3c93d9");
     private String mNewEventIdentifier = "-100";
     private Drawable mNewEventIconDrawable;
     private int mNewEventLengthInMinutes = 60;
@@ -470,6 +470,7 @@ public class WeekView extends View {
             mTodayHeaderTextColor = a.getColor(R.styleable.WeekView_todayHeaderTextColor, mTodayHeaderTextColor);
             mEventTextSize = a.getDimensionPixelSize(R.styleable.WeekView_eventTextSize, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, mEventTextSize, context.getResources().getDisplayMetrics()));
             mEventTextColor = a.getColor(R.styleable.WeekView_eventTextColor, mEventTextColor);
+            mDefaultEventColor = a.getColor(R.styleable.WeekView_eventColor, mDefaultEventColor);
             mNewEventColor = a.getColor(R.styleable.WeekView_newEventColor, mNewEventColor);
             mNewEventIconDrawable = a.getDrawable(R.styleable.WeekView_newEventIconResource);
             // For backward compatibility : Set "mNewEventIdentifier" if the attribute is "WeekView_newEventId" of type int
@@ -596,11 +597,6 @@ public class WeekView extends View {
         mEventTextPaint.setStyle(Paint.Style.FILL);
         mEventTextPaint.setColor(mEventTextColor);
         mEventTextPaint.setTextSize(mEventTextSize);
-
-        // Set default event color.
-        mDefaultEventColor = Color.parseColor("#9fc6e7");
-        // Set default empty event color.
-        mNewEventColor = Color.parseColor("#3c93d9");
 
         mScaleDetector = new ScaleGestureDetector(mContext, new WeekViewGestureListener());
     }
