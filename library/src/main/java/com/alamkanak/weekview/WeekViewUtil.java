@@ -1,5 +1,9 @@
 package com.alamkanak.weekview;
 
+import android.content.Context;
+import android.content.res.Resources;
+import android.util.TypedValue;
+
 import java.util.Calendar;
 
 /**
@@ -84,5 +88,14 @@ public class WeekViewUtil {
      */
     public static int getPassedMinutesInDay(int hour, int minute) {
         return hour * 60 + minute;
+    }
+
+    public static float dpToPx(Context context, int dp) {
+        Resources r = context.getResources();
+        return TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                r.getDisplayMetrics()
+        );
     }
 }

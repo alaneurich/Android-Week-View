@@ -114,18 +114,18 @@ public class WeekView extends View {
     private TextColorPicker textColorPicker;
 
     // Attributes and their default values.
-    private int mHourHeight = 50;
+    private int mHourHeight = (int) WeekViewUtil.dpToPx(getContext(), 32);
     private int mNewHourHeight = -1;
     private int mMinHourHeight = 0; //no minimum specified (will be dynamic, based on screen)
     private int mEffectiveMinHourHeight = mMinHourHeight; //compensates for the fact that you can't keep zooming out.
-    private int mMaxHourHeight = 250;
+    private int mMaxHourHeight = (int) WeekViewUtil.dpToPx(getContext(), 128);
     private int mColumnGap = 10;
     private int mFirstDayOfWeek = Calendar.MONDAY;
     private int mTextSize = 12;
-    private int mHeaderColumnPadding = 10;
+    private int mHeaderColumnPadding = (int) WeekViewUtil.dpToPx(getContext(), 8);
     private int mHeaderColumnTextColor = Color.BLACK;
     private int mNumberOfVisibleDays = 3;
-    private int mHeaderRowPadding = 10;
+    private int mHeaderRowPadding = (int) WeekViewUtil.dpToPx(getContext(), 8);
     private int mHeaderRowBackgroundColor = Color.WHITE;
     private int mDayBackgroundColor = Color.rgb(245, 245, 245);
     private int mPastBackgroundColor = Color.rgb(227, 227, 227);
@@ -140,7 +140,7 @@ public class WeekView extends View {
     private int mTodayHeaderTextColor = Color.rgb(39, 137, 228);
     private int mEventTextSize = 12;
     private int mEventTextColor = Color.BLACK;
-    private int mEventPadding = 8;
+    private int mEventPadding = (int) WeekViewUtil.dpToPx(getContext(), 4);
     private int mHeaderColumnBackgroundColor = Color.WHITE;
     private int mDefaultEventColor = Color.parseColor("#9fc6e7");
     private int mNewEventColor = Color.parseColor("#3c93d9");
@@ -165,7 +165,9 @@ public class WeekView extends View {
     private boolean mShowDistinctPastFutureColor = false;
     private boolean mHorizontalFlingEnabled = true;
     private boolean mVerticalFlingEnabled = true;
-    private int mAllDayEventHeight = 100;
+    private int mAllDayEventHeight = (int) WeekViewUtil.dpToPx(getContext(), 42);
+    private int mHeaderDateAndAllDayEventGap = (int) WeekViewUtil.dpToPx(getContext(), 8);
+    private int mHeaderDateInnerTextPadding = (int) WeekViewUtil.dpToPx(getContext(), 2);
     private float mZoomFocusPoint = 0;
     private boolean mZoomFocusPointEnabled = true;
     private int mScrollDuration = 250;
@@ -491,6 +493,8 @@ public class WeekView extends View {
             mHorizontalFlingEnabled = a.getBoolean(R.styleable.WeekView_horizontalFlingEnabled, mHorizontalFlingEnabled);
             mVerticalFlingEnabled = a.getBoolean(R.styleable.WeekView_verticalFlingEnabled, mVerticalFlingEnabled);
             mAllDayEventHeight = a.getDimensionPixelSize(R.styleable.WeekView_allDayEventHeight, mAllDayEventHeight);
+            mHeaderDateAndAllDayEventGap = a.getDimensionPixelSize(R.styleable.WeekView_headerDateAndAllDayEventGap, mHeaderDateAndAllDayEventGap);
+            mHeaderDateInnerTextPadding = a.getDimensionPixelSize(R.styleable.WeekView_headerDateInnerTextPadding, mHeaderDateInnerTextPadding);
             mZoomFocusPoint = a.getFraction(R.styleable.WeekView_zoomFocusPoint, 1, 1, mZoomFocusPoint);
             mZoomFocusPointEnabled = a.getBoolean(R.styleable.WeekView_zoomFocusPointEnabled, mZoomFocusPointEnabled);
             mScrollDuration = a.getInt(R.styleable.WeekView_scrollDuration, mScrollDuration);
@@ -540,7 +544,8 @@ public class WeekView extends View {
         if (getDateTimeInterpreter().interpretDate(Calendar.getInstance()) != null) {
             String dateString = getDateTimeInterpreter().interpretDate(Calendar.getInstance());
             mHeaderTextPaint.getTextBounds(dateString, 0, dateString.length(), rect);
-            mHeaderTextHeight = rect.height() * (dateString.split("\n").length + 1);
+            int lineCount = dateString.split("\n").length + 1;
+            mHeaderTextHeight = rect.height() * lineCount + (mHeaderDateInnerTextPadding * (lineCount - 1));
         } else {
             mHeaderTextPaint.getTextBounds(exampleTime, 0, exampleTime.length(), rect);
             mHeaderTextHeight = rect.height();
@@ -730,7 +735,7 @@ public class WeekView extends View {
             }
         }
         if (containsAllDayEvent) {
-            mHeaderHeight = mHeaderTextHeight + (mAllDayEventHeight + mHeaderMarginBottom);
+            mHeaderHeight = mHeaderTextHeight + (mHeaderDateAndAllDayEventGap + mAllDayEventHeight + mHeaderMarginBottom);
         } else {
             mHeaderHeight = mHeaderTextHeight;
         }
@@ -975,6 +980,7 @@ public class WeekView extends View {
         canvas.restore();
 
         // Draw the header row texts.
+        int innerTextPadding = (int) WeekViewUtil.dpToPx(getContext(), 2);
         startPixel = startFromPixel;
         for (int dayNumber = leftDaysWithGaps + 1; dayNumber <= leftDaysWithGaps + getRealNumberOfVisibleDays() + 1; dayNumber++) {
             // Check if the day is today.
@@ -993,7 +999,7 @@ public class WeekView extends View {
             }
             String[] lines = dayLabel.split("\n");
             for (int a = 0; a < lines.length; a++) {
-                canvas.drawText(lines[a], startPixel + mWidthPerDay / 2, mHeaderTextHeight / lines.length * (a + 1) + mHeaderRowPadding, isToday ? mTodayHeaderTextPaint : mHeaderTextPaint);
+                canvas.drawText(lines[a], startPixel + mWidthPerDay / 2, (a != 0 ? mHeaderDateInnerTextPadding : 0) + mHeaderTextHeight / lines.length * (a + 1) + mHeaderRowPadding, isToday ? mTodayHeaderTextPaint : mHeaderTextPaint);
             }
             drawAllDayEvents(day, startPixel, canvas);
             startPixel += mWidthPerDay + mColumnGap;
@@ -1144,7 +1150,7 @@ public class WeekView extends View {
                 if (isSameDay(mEventRects.get(i).event.getStartTime(), date) && mEventRects.get(i).event.isAllDay()) {
 
                     // Calculate top.
-                    float top = mHeaderRowPadding * 2 + mHeaderMarginBottom + mHeaderTextHeight + mEventMarginVertical;
+                    float top = mHeaderRowPadding + mHeaderTextHeight + mHeaderDateAndAllDayEventGap + mEventMarginVertical;
 
                     // Calculate bottom.
                     float bottom = top + mEventRects.get(i).bottom;

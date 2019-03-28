@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="WeekView">
+        <attr name="headerDateInnerTextPadding" format="dimension" />
+        <attr name="headerDateAndAllDayEventGap" format="dimension" />
         <attr name="allDayEventHeight" format="dimension" />
         <attr name="autoLimitTime" format="boolean" />
         <attr name="columnGap" format="dimension" />
