@@ -537,8 +537,14 @@ public class WeekView extends View {
         mHeaderTextPaint.setColor(mHeaderColumnTextColor);
         mHeaderTextPaint.setTextAlign(Paint.Align.CENTER);
         mHeaderTextPaint.setTextSize(mTextSize);
-        mHeaderTextPaint.getTextBounds(exampleTime, 0, exampleTime.length(), rect);
-        mHeaderTextHeight = rect.height();
+        if (getDateTimeInterpreter().interpretDate(Calendar.getInstance()) != null) {
+            String dateString = getDateTimeInterpreter().interpretDate(Calendar.getInstance());
+            mHeaderTextPaint.getTextBounds(dateString, 0, dateString.length(), rect);
+            mHeaderTextHeight = rect.height() * (dateString.split("\n").length + 1);
+        } else {
+            mHeaderTextPaint.getTextBounds(exampleTime, 0, exampleTime.length(), rect);
+            mHeaderTextHeight = rect.height();
+        }
         mHeaderTextPaint.setTypeface(mTypeface);
 
 
@@ -985,7 +991,10 @@ public class WeekView extends View {
             if (dayLabel == null) {
                 dayLabel = interpretDefaultDate(day);
             }
-            canvas.drawText(dayLabel, startPixel + mWidthPerDay / 2, mHeaderTextHeight + mHeaderRowPadding, isToday ? mTodayHeaderTextPaint : mHeaderTextPaint);
+            String[] lines = dayLabel.split("\n");
+            for (int a = 0; a < lines.length; a++) {
+                canvas.drawText(lines[a], startPixel + mWidthPerDay / 2, mHeaderTextHeight / lines.length * (a + 1) + mHeaderRowPadding, isToday ? mTodayHeaderTextPaint : mHeaderTextPaint);
+            }
             drawAllDayEvents(day, startPixel, canvas);
             startPixel += mWidthPerDay + mColumnGap;
         }
@@ -1135,7 +1144,7 @@ public class WeekView extends View {
                 if (isSameDay(mEventRects.get(i).event.getStartTime(), date) && mEventRects.get(i).event.isAllDay()) {
 
                     // Calculate top.
-                    float top = mHeaderRowPadding * 2 + mHeaderMarginBottom + +mTimeTextHeight / 2 + mEventMarginVertical;
+                    float top = mHeaderRowPadding * 2 + mHeaderMarginBottom + mHeaderTextHeight + mEventMarginVertical;
 
                     // Calculate bottom.
                     float bottom = top + mEventRects.get(i).bottom;
